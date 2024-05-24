@@ -16,11 +16,11 @@ i caved
 ```rust
 fn main() {
     let x = Box::new(5);
-    
-    let mut y = x; // mutable reference to x. 
 
-    *y = 4;  
-    
+    let mut y = x; // mutable reference to x.
+
+    *y = 4;
+
     assert_eq!(*y, 4);
 
     println!("Success!");
@@ -32,8 +32,8 @@ error[E0382]: borrow of moved value: `x`
   |
 3 |     let x = Box::new(5);
   |         - move occurs because `x` has type `Box<i32>`, which does not implement the `Copy` trait
-4 |     
-5 |     let mut y = x; // mutable reference to x. 
+4 |
+5 |     let mut y = x; // mutable reference to x.
   |                 - value moved here
 ...
 9 |     assert_eq!(*x, 4);
@@ -42,9 +42,12 @@ error[E0382]: borrow of moved value: `x`
   = note: this error originates in the macro `assert_eq` (in Nightly builds, run with -Z macro-backtrace for more info)
 help: consider cloning the value if the performance cost is acceptable
   |
-5 |     let mut y = x.clone(); // mutable reference to x. 
+5 |     let mut y = x.clone(); // mutable reference to x.
   |                  ++++++++
 
 For more information about this error, try `rustc --explain E0382`.
 error: could not compile `playground` (bin "playground") due to 1 previous error
 
+
+- string literals (&s aka string slice) vs. String types (String::from("hello world"); stored as vector of bytes) are a thing!
+```
