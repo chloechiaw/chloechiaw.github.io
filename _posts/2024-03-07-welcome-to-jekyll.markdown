@@ -49,5 +49,18 @@ For more information about this error, try `rustc --explain E0382`.
 error: could not compile `playground` (bin "playground") due to 1 previous error
 
 
-- string literals (&s aka string slice) vs. String types (String::from("hello world"); stored as vector of bytes) are a thing!
+- string literals (&s aka string slice) vs. String types (String::from("hello world") using a string literal, stored as vector of bytes) are a thing!
+- .tostring() converts a string literal to a String type 
+```
+- &mut vs ref: &mut is used to create a mutable reference while ref is used to create a reference in destructuring (for example, a tuple)
+
+```rust 
+fn main() {
+    let t = (String::from("hello"), String::from("world"));
+
+    // Using ref to borrow the elements of the tuple
+    let (ref s1, ref s2) = t;
+
+    // Now s1 and s2 are references to the elements of t
+    println!("{}, {}", s1, s2); // Output: "hello", "world"
 ```
