@@ -36,3 +36,20 @@ fn spawn_spaceship(mut commands: Commands) {
 ```
 
 "Data is stored in components and behavior in systems."
+
+Beyv: World is a data structure that stores and exposes operations on all the entities and components in the application 
+
+What are commands? 
+- Commands are how we alter game state. Equivalent to insert/delete 
+
+```rust 
+ commands.spawn((
+    Position {x: 0.0, y:, 0.0} // entity 
+    Velocity{x: 1/0, y:1.0} // entity 
+  ));```
+What are queries?
+- Immediate access to existing components. Equivalent to read/write 
+
+```rust 
+fn update_position(mut query: Query<(&Velocity, &mut Position)>)
+```
