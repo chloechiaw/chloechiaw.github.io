@@ -1,0 +1,38 @@
+---
+layout: post
+title: "Bevy Log 🕹"
+date: 2024-05-23 00:38:17 -0800
+categories: jekyll update
+---
+
+Trying to learn Bevy 2 days after picking up Rust. Let's see how this goes !!! 
+
+Their home page calls Bevy "refeshingly simple" lol.
+
+Bevy implements an Entity Component System rather than traditional Object-Oriented Programing 
+
+3 things:
+Entity 
+Component 
+Systems 
+
+Componenet: 
+```rust
+#[derive(Component)] 
+struct Position {x: f32, y: f32}
+
+#[derive(Component)]
+struct Velocity {x: f32, y: f32 }
+```
+This entire block of code below is a System. 
+```rust 
+fn spawn_spaceship(mut commands: Commands) {
+  commands.spawn((
+    Position {x: 0.0, y:, 0.0} // entity 
+    Velocity{x: 1/0, y:1.0} // entity 
+  ));
+}
+
+```
+
+"Data is stored in components and behavior in systems."
