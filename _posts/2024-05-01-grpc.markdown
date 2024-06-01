@@ -1,0 +1,23 @@
+---
+layout: post
+title: "gRPC 🙂"
+date: 2024-06-1 00:38:17 -0800
+categories: jekyll update
+---
+
+**api** 
+
+- send request (client)
+- send answer (server)
+
+**grpc** 
+
+- lets you define **request** and **response** for RPC (remote procedure calls) and handles the rest for you
+- remote procedure call: request a service from a program located on another computer without needing to understand the network’s details
+- language independent
+
+how? 
+
+- we use protocol buffers (.proto) , whcih generate code. data is binary and serialized (transmit an object into bytes)
+- protocol buffers data sizes are way more compact than json
+- json: 50 bytes for the same object 25 bytes
