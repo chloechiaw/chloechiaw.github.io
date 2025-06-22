@@ -1,9 +1,10 @@
 ---
 layout: page
-title: Hi I'm Chloe.
+title: about
 permalink: /about/
 --- 
 
+### Hi I'm Chloe
 email: chloechia at berkeley dot edu
 
 I like working on projects in software, vision and perception. I'm starting my 4th year at UC Berkeley soon, but am taking a gap semester interning at NVIDIA in Santa Clara.
