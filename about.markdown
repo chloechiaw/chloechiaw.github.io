@@ -1,10 +1,8 @@
 ---
 layout: page
-title: About
+title: Hi I'm Chloe.
 permalink: /about/
----
-
-### Hi I'm Chloe.
+--- 
 
 email: chloechia at berkeley dot edu
 
@@ -19,7 +17,3 @@ Intrinsic (SWE)
 MIT Senseable City Lab (Research)
 Culdesac (Growth)
 
-Contact:
-
-email: chloechia at berkeley dot edu
-twitter: chloewchia
