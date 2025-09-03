@@ -12,7 +12,7 @@ I like working on projects in software, vision and perception. I'm starting my 4
 
 On campus, I'm involved with Machine Learning @ Berkeley, and worked on projects in the research committee! This includes improving compute access, organizing reading groups, and most importantly designing our hoodie.
 
-### previous summers:
+### places I've spent summers at:
 
 summer 25: Anduril (SWE)
 summer 24: Intrinsic (SWE)
