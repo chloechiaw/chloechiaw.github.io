@@ -5,158 +5,101 @@ date: 2025-09-02 00:38:17 -0800
 categories: jekyll update
 ---
 
-# What is Halide? 
-A language for fast, portable computation on arrays, images, tensors 
-Embedded in C++ so it is a library. But it also executes code by JITting, producing C ABI compatible files. So it’s more external. You define what you want to compute separately from how you want to optimize it. 
+I wanted to explore this framework after hearing about it from my internship this summer! It's an older C++ framework, but it offers some neat ways to think about when and how to add optimization.  The primary use case for Halide is speeding up image processing. The way we achieve speedups is quite different from existing library optimizations like [PyTorch's JIT Compiler](https://residentmario.github.io/pytorch-training-performance-guide/jit.html) or compiler flags like -o3 - instead we separate the algorithm from the schedule (or what to compute from how to optimize it). 
 
-# 3 examples that show optimization we can do 
-Parallelism split work across cores 
-Divide independent work across independent CPU cores 
-Redundant work recompute instead of loading from distant memory 
-Loading a value from memory is sometimes slower than recomputing it. 
-This is especially true when vectorizing 
-Locality keep data close together in cache 
-If you just wrote a value to memory, you should try to use it quickly, while it’s still in cache 
+These are rough draft notes and a lot of the info is from the [CPPCon's Halide Demo](https://www.youtube.com/watch?v=1ir_nEfKQ7A) ! 
 
-# How the tradeoff manifests in practice 
-We try to trade off between these 3 factors. The heart of every numeric pipeline. 
-Parallelism vs locality 
-Dependency chains 
-High parallelism 
-If operation B depends on operation A’s output, high parallelism.
-Compute all of A then all of B. poor locality - As results get cold in cache 
-High locality 
-Compute A then immediately compute B for the same data region (limits parallelism) 
-Redundant work 
-Have multiple cores each compute the A values they need for their B work 
+# What is Halide?
 
-Halide’s solution: you explicitly choose the schedule - tile sizes, loop orders, which loops to parallelize. The compiler doesn’t guess you tell it to compute this much of A, then immediately do the corresponding B work, or fully parallelize A, accept the cache misses. 
+A language for fast, portable computation on arrays, images, tensors
 
-Key problem with using optimized libraries for image/tensor processing 
+Halide gives the flexibility of a C++ library with the performance of a standalone compiler. You write your algorithms in C++, but Halide JIT-compiles them into optimized, C ABI-compatible code at runtime.
+ 
+
+# 3 typical optimizations 
+
+1. Parallelism -  split work across cores
+	- Divide independent work across independent CPU cores
+
+2. Recompute redundant work instead of loading from distant memory
+	- Loading a value from memory is sometimes slower than recomputing it.
+	- This is especially true when vectorizing
+
+3. Locality keep data close together in cache
+	- If you just wrote a value to memory, you should try to use it quickly, while it’s still in cache
+
+
+# How the tradeoff manifests in practice
+We try to trade off between these 3 factors. 
+
+1. Parallelism vs locality
+	- Dependency chains
+	- High parallelism
+		- If operation B depends on operation A’s output, high parallelism.
+		- Compute all of A then all of B. poor locality - As results get cold in cache
+
+2. High locality
+	- Compute A then immediately compute B for the same data region (limits parallelism)
+
+3. Redundant work
+   - Have multiple cores each compute the A values they need for their B work
+
+ 
+Halide’s solution: you explicitly choose the optimization strategy - tile sizes (how big should each chunk of data be to fit nicely in cache), loop ordering (which dimensions should be processed first), which loops to parallelize. The compiler doesn’t make assumptions about what's best for the use case - you tell it to compute this much of A, then immediately do the corresponding B work, or fully parallelize A, accept the cache misses, then do B. 
+
+ 
+# Difference between using an optimized library and Halide
+
 When you chain together optimized library calls, each step reads data from DRAM, does its optimized computation, writes results back to DRAM (slow)
+
 Data gets written to memory in step 1, then gets immediately read for step 2
-You’re doing 6 DRAM operations instead of 2 (Read input once, write final output once) 
 
-# Halide lets you:
-Rather than library_func1() -> library_funct2() -> library func3(), halide lets you fuse the entire pipeline so data flows through the cache 
-Read a small tile of input data. Compute step 1,2,3 on that tile while it’s hot in cache. Write the final result. Move to the next tile. This is called “fusion” -  instead of materializing intermediate results in slow DRAM, you keep data flowing through the fast cache hierarchy. The optimized kernels are actually pessimal when chained together due to memory bandwidth bottlenecks
+You’re doing 6 DRAM operations instead of 2 (Read input once, write final output once)
 
-# Key problem with just using -O4 flag 
-- O4 refers to compiler optimization levels, aggressive optimization setting beyond -O3. 
-The compiler can’t restructure your entire computation pipeline - it optimizes functions individually but can’t fuse separate library calls or reorganize data flow across your whole program 
+Halide: 
+- Rather than library_func1() -> library_funct2() -> library func3(), Halide lets you fuse the entire pipeline so data flows through the cache
 
-# Halide lets you:
-Manually designing the computation schedule in Halide 
+Example flow: 
+- Read a small tile of input data. Compute step 1,2,3 on that tile while it’s hot in cache. Write the final result. Move to the next tile. This is called “fusion” - instead of materializing intermediate results in slow DRAM, you keep data flowing through the fast cache hierarchy. The optimized kernels are actually pessimal when chained together due to memory bandwidth bottlenecks
 
-# Running example Making a blur faster in Halide 
+  
+
+# Why not use -O4 flag? 
+
+O4 refers to compiler optimization levels, aggressive optimization setting beyond -O3.
+
+The compiler can’t restructure your entire computation pipeline - it optimizes functions individually but can’t fuse separate library calls or reorganize data flow across your whole program
+
+  
+
+# Example: Making a blur faster in Halide
+
 Two-stage Blur
-Prior step: extend boundaries since we lose boundaries in a blur situation 
-1st step: horizontal blur. 
-Averaging a pixel’s values in a 1x3 window (neighbors to the left and the right) 
-2nd step: vertical blur 
-Averages a pixel’s values in a 3x1 window. 
-Overall blur averages a 3x3 window of the input 
 
-# How to make a blur faster 
-Tiling: breaks the image into smaller tiles (32x8) pixels that fit better in cache 
+Prior step: extend boundaries since we lose boundaries in a blur situation
+
+1st step: horizontal blur.
+
+- Averaging a pixel’s values in a 1x3 window (neighbors to the left and the right)
+
+2nd step: vertical blur
+- Averages a pixel’s values in a 3x1 window.
+
+Overall blur averages a 3x3 window of the input
+
+  
+
+# How to make a blur faster
+
+Tiling: breaks the image into smaller tiles (32x8) pixels that fit better in cache
+
 Parallelization: Uses parallel() to process different tiles on multiple CPU cores
-Vectorization: uses vectorize() to process multiple pixels simultaneously using SIMD instructions 
-Compute scheduling: uses compute_at() to keep intermediate results (horizontal blur) in cache rather than writing to/reading from memory 
 
+Vectorization: uses vectorize() to process multiple pixels simultaneously using SIMD instructions
 
-# This code block is copy pasted from Halide's tutorial page. 
+Compute scheduling: uses compute_at() to keep intermediate results (horizontal blur) in cache rather than writing to/reading from memory
 
-```cpp
-#include "Halide.h"
-
-// We'll also include stdio for printf.
-#include <stdio.h>
-
-int main(int argc, char **argv)
-{
-
-    // This program defines a single-stage imaging pipeline that
-    // outputs a grayscale diagonal gradient.
-
-    // A 'Func' object represents a pipeline stage. It's a pure
-    // function that defines what value each pixel should have. You
-    // can think of it as a computed image.
-    Halide::Func gradient;
-
-    // Var objects are names to use as variables in the definition of
-    // a Func. They have no meaning by themselves.
-    Halide::Var x, y;
-
-    // We typically use Vars named 'x' and 'y' to correspond to the x
-    // and y axes of an image, and we write them in that order. If
-    // you're used to thinking of images as having rows and columns,
-    // then x is the column index, and y is the row index.
-
-    // Funcs are defined at any integer coordinate of its variables as
-    // an Expr in terms of those variables and other functions.
-    // Here, we'll define an Expr which has the value x + y. Vars have
-    // appropriate operator overloading so that expressions like
-    // 'x + y' become 'Expr' objects.
-    Halide::Expr e = x + y;
-
-    // Now we'll add a definition for the Func object. At pixel x, y,
-    // the image will have the value of the Expr e. On the left hand
-    // side we have the Func we're defining and some Vars. On the right
-    // hand side we have some Expr object that uses those same Vars.
-    gradient(x, y) = e;
-
-    // This is the same as writing:
-    //
-    //   gradient(x, y) = x + y;
-    //
-    // which is the more common form, but we are showing the
-    // intermediate Expr here for completeness.
-
-    // That line of code defined the Func, but it didn't actually
-    // compute the output image yet. At this stage it's just Funcs,
-    // Exprs, and Vars in memory, representing the structure of our
-    // imaging pipeline. We're meta-programming. This C++ program is
-    // constructing a Halide program in memory. Actually computing
-    // pixel data comes next.
-
-    // Now we 'realize' the Func, which JIT compiles some code that
-    // implements the pipeline we've defined, and then runs it.  We
-    // also need to tell Halide the domain over which to evaluate the
-    // Func, which determines the range of x and y above, and the
-    // resolution of the output image. Halide.h also provides a basic
-    // templatized image type we can use. We'll make an 800 x 600
-    // image.
-    Halide::Buffer<int32_t> output = gradient.realize({800, 600});
-
-    // Halide does type inference for you. Var objects represent
-    // 32-bit integers, so the Expr object 'x + y' also represents a
-    // 32-bit integer, and so 'gradient' defines a 32-bit image, and
-    // so we got a 32-bit signed integer image out when we call
-    // 'realize'. Halide types and type-casting rules are equivalent
-    // to C.
-
-    // Let's check everything worked, and we got the output we were
-    // expecting:
-    for (int j = 0; j < output.height(); j++)
-    {
-        for (int i = 0; i < output.width(); i++)
-        {
-            // We can access a pixel of an Buffer object using similar
-            // syntax to defining and using functions.
-            if (output(i, j) != i + j)
-            {
-                printf("Something went wrong!\n"
-                       "Pixel %d, %d was supposed to be %d, but instead it's %d\n",
-                       i, j, i + j, output(i, j));
-                return -1;
-            }
-        }
-    }
-
-    // Everything worked! We defined a Func, then called 'realize' on
-    // it to generate and run machine code that produced an Buffer.
-    printf("Success!\n");
-
-    return 0;
-}
-```
+ ```cpp 
+ #include  "Halide.h" using  namespace Halide; Func blur_example()  { // Input image Buffer input =  load_image("input.png"); Func input_func("input"); input_func(x, y)  =  input(x, y); // Blur edges Func clamped("clamped"); clamped(x, y)  =  input_func(clamp(x,  0, input.width()-1), clamp(y,  0, input.height()-1)); // Horizontal blur Func blur_x("blur_x"); blur_x(x, y)  =  (clamped(x-1, y)  +  clamped(x, y)  +  clamped(x+1, y))  /  3; // Vertical blur Func blur_y("blur_y"); blur_y(x, y)  =  (blur_x(x, y-1)  +  blur_x(x, y)  +  blur_x(x, y+1))  /  3; return blur_y; } 
+ ```
+ 
