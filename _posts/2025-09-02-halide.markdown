@@ -5,13 +5,13 @@ date: 2025-09-02 00:38:17 -0800
 categories: jekyll update
 ---
 
-I wanted to explore this framework after hearing about it from my internship this summer! It's an older C++ framework, but it offers some neat ways to think about when and how to add optimization.  The primary use case for Halide is speeding up image processing. The way we achieve speedups is quite different from existing library optimizations like [PyTorch's JIT Compiler](https://residentmario.github.io/pytorch-training-performance-guide/jit.html) or compiler flags like -o3 - instead we separate the algorithm from the schedule (or what to compute from how to optimize it). 
+I wanted to explore this framework after hearing about it from my internship this summer. It's an older C++ framework, but it offers some neat ways to think about when and how to add optimization (for images). The primary use case for Halide is speeding up image processing. The way we achieve speedups is quite different from existing library optimizations like [PyTorch's JIT Compiler](https://residentmario.github.io/pytorch-training-performance-guide/jit.html) or compiler flags like -o3 - instead we separate the algorithm from the schedule (or what to compute from how to optimize it). 
 
-These are rough draft notes and a lot of the info is from the [CPPCon's Halide Demo](https://www.youtube.com/watch?v=1ir_nEfKQ7A) ! 
+These are rough draft notes and a lot of the info is from the [CPPCon's Halide Demo](https://www.youtube.com/watch?v=1ir_nEfKQ7A) ! At the bottom is code showing how to apply a blur in Halide. 
 
 # What is Halide?
 
-A language for fast, portable computation on arrays, images, tensors
+Halide is a language for fast, portable computation on arrays, images, tensors.
 
 Halide gives the flexibility of a C++ library with the performance of a standalone compiler. You write your algorithms in C++, but Halide JIT-compiles them into optimized, C ABI-compatible code at runtime.
  
@@ -30,6 +30,7 @@ Halide gives the flexibility of a C++ library with the performance of a standalo
 
 
 # How the tradeoff manifests in practice
+
 We try to trade off between these 3 factors. 
 
 1. Parallelism vs locality
@@ -47,47 +48,43 @@ We try to trade off between these 3 factors.
  
 Halide’s solution: you explicitly choose the optimization strategy - tile sizes (how big should each chunk of data be to fit nicely in cache), loop ordering (which dimensions should be processed first), which loops to parallelize. The compiler doesn’t make assumptions about what's best for the use case - you tell it to compute this much of A, then immediately do the corresponding B work, or fully parallelize A, accept the cache misses, then do B. 
 
- 
-# Difference between using an optimized library and Halide
+# Difference between chaining multiple optimized library calls and Halide
 
 When you chain together optimized library calls, each step reads data from DRAM, does its optimized computation, writes results back to DRAM (slow)
 
-Data gets written to memory in step 1, then gets immediately read for step 2
+Example: Input → [Read] → Func1 → [Write] → [Read] → Func2 → [Write] → [Read] → Func3 → [Write] → Output
 
-You’re doing 6 DRAM operations instead of 2 (Read input once, write final output once)
+You're executing 6 DRAM operations instead of 2. Each intermediate result materializes in slow memory (200+ cycle latency), immediately gets read back for the next stage. The "optimized" kernels become pessimal when chained due to memory wall constraints.
 
-Halide: 
-- Rather than library_func1() -> library_funct2() -> library func3(), Halide lets you fuse the entire pipeline so data flows through the cache
+Halide enables:
+Input → [Read tile] → Func1→Func2→Func3 → [Write tile] → Next tile
 
-Example flow: 
-- Read a small tile of input data. Compute step 1,2,3 on that tile while it’s hot in cache. Write the final result. Move to the next tile. This is called “fusion” - instead of materializing intermediate results in slow DRAM, you keep data flowing through the fast cache hierarchy. The optimized kernels are actually pessimal when chained together due to memory bandwidth bottlenecks
+Flow: 
+Read a small tile of input data. Compute step 1,2,3 on that tile while it’s hot in cache. Write the final result. Move to the next tile. This is called “fusion” - instead of materializing intermediate results in slow DRAM, you keep data flowing through the fast cache hierarchy. The optimized kernels are actually pessimal when chained together due to memory bandwidth bottlenecks
+
+Rather than library_func1() -> library_funct2() -> library func3(), Halide lets you fuse the entire pipeline so data flows through the cache
 
   
-
 # Why not use -O4 flag? 
 
 O4 refers to compiler optimization levels, aggressive optimization setting beyond -O3.
 
 The compiler can’t restructure your entire computation pipeline - it optimizes functions individually but can’t fuse separate library calls or reorganize data flow across your whole program
 
-  
 
 # Example: Making a blur faster in Halide
 
-Two-stage Blur
+Example: Two-Pass Blur Implementation
+Setup: 3×3 blur implemented as separable horizontal + vertical passes
 
-Prior step: extend boundaries since we lose boundaries in a blur situation
+Stage 1: Horizontal blur (1×3 kernel)
+Stage 2: Vertical blur (3×1 kernel)
+Boundary handling: Extend edges to preserve output dimensions
 
-1st step: horizontal blur.
+Traditional implementation: Each pass reads the entire image, writes the entire intermediate result. For a 4K image, that's ~50MB written and immediately re-read.
 
-- Averaging a pixel’s values in a 1x3 window (neighbors to the left and the right)
-
-2nd step: vertical blur
-- Averages a pixel’s values in a 3x1 window.
-
-Overall blur averages a 3x3 window of the input
-
-  
+Halide fusion: Process 64×64 tiles through both passes while data remains cache-resident. The intermediate horizontal blur result never touches DRAM—it flows directly into the vertical pass.
+This architectural shift transforms a memory-bound algorithm into a compute-bound one, often delivering 3-10× speedups on bandwidth-constrained hardware.
 
 # How to make a blur faster
 
@@ -99,7 +96,30 @@ Vectorization: uses vectorize() to process multiple pixels simultaneously using 
 
 Compute scheduling: uses compute_at() to keep intermediate results (horizontal blur) in cache rather than writing to/reading from memory
 
- ```cpp 
- #include  "Halide.h" using  namespace Halide; Func blur_example()  { // Input image Buffer input =  load_image("input.png"); Func input_func("input"); input_func(x, y)  =  input(x, y); // Blur edges Func clamped("clamped"); clamped(x, y)  =  input_func(clamp(x,  0, input.width()-1), clamp(y,  0, input.height()-1)); // Horizontal blur Func blur_x("blur_x"); blur_x(x, y)  =  (clamped(x-1, y)  +  clamped(x, y)  +  clamped(x+1, y))  /  3; // Vertical blur Func blur_y("blur_y"); blur_y(x, y)  =  (blur_x(x, y-1)  +  blur_x(x, y)  +  blur_x(x, y+1))  /  3; return blur_y; } 
- ```
+```cpp
+#include "Halide.h"
+using namespace Halide;
+
+Func blur_example() {
+    // Input image
+    Buffer input = load_image("input.png");
+    Func input_func("input");
+    input_func(x, y) = input(x, y);
+    
+    // Blur edges
+    Func clamped("clamped");
+    clamped(x, y) = input_func(clamp(x, 0, input.width()-1), 
+                               clamp(y, 0, input.height()-1));
+    
+    // Horizontal blur
+    Func blur_x("blur_x");
+    blur_x(x, y) = (clamped(x-1, y) + clamped(x, y) + clamped(x+1, y)) / 3;
+    
+    // Vertical blur
+    Func blur_y("blur_y");
+    blur_y(x, y) = (blur_x(x, y-1) + blur_x(x, y) + blur_x(x, y+1)) / 3;
+    
+    return blur_y;
+}
+```
  
