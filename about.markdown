@@ -12,4 +12,4 @@ On campus, I'm involved with Machine Learning @ Berkeley, and worked on projects
 
 email: chloechia at berkeley dot edu
 
-Last updated: September 2025 
+Last updated: September 2025
