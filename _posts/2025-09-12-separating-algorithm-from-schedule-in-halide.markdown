@@ -3,6 +3,7 @@ layout: post
 title: "Image processing speedups in Halide"
 date: 2025-09-12 00:38:17 -0800
 categories: jekyll update
+permalink: /halide-speedups/
 ---
 
 Hello! I wanted to explore this programming language, [Halide](https://halide-lang.org/), after hearing about it from my last internship. It's an older language embedded with C++, but it offers some neat ways to think about optimization, which is especially relevant in today's "compute-bound vs memory-bound" discussion. 
