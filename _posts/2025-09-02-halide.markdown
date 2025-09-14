@@ -5,7 +5,7 @@ date: 2025-09-02 00:38:17 -0800
 categories: jekyll update
 ---
 
-I wanted to explore this framework after hearing about it from my internship this summer. It's an older C++ framework, but it offers some neat ways to think about optimization, which is especially relevant in todya's compute bound vs memory bound discussion. The problem: chaining image processing functions kills performance. Each function reads from memory, computes, writes back to memory. Your CPU spends more time moving data than processing it.
+I wanted to explore this programming language, [Halide](https://halide-lang.org/), after hearing about it from my internship this summer. It's an older language embeddeed with C++, but it offers some neat ways to think about optimization, which is especially relevant in today's "compute-bound vs memory-bound"discussion. Biggest learning from exploring Halide: chaining image processing functions kills performance. Each function reads from memory, computes, writes back to memory. Your CPU spends more time moving data than processing it.
 
 Halide lets you write the algorithm once, then experiment with different execution strategies. Want to process 64x64 tiles? Change one line. Want to vectorize differently? Change another line. The computation stays the same. 
 
