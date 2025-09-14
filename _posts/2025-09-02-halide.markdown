@@ -5,9 +5,20 @@ date: 2025-09-02 00:38:17 -0800
 categories: jekyll update
 ---
 
-I wanted to explore this framework after hearing about it from my internship this summer. It's an older C++ framework, but it offers some neat ways to think about when and how to add optimization (for images). The primary use case for Halide is speeding up image processing. The way we achieve speedups is quite different from existing library optimizations like [PyTorch's JIT Compiler](https://residentmario.github.io/pytorch-training-performance-guide/jit.html) or compiler flags like -o3 - instead we separate the algorithm from the schedule (or what to compute from how to optimize it). 
+I wanted to explore this framework after hearing about it from my internship this summer. It's an older C++ framework, but it offers some neat ways to think about optimization, which is especially relevant in todya's compute bound vs memory bound discussion. The problem: chaining image processing functions kills performance. Each function reads from memory, computes, writes back to memory. Your CPU spends more time moving data than processing it.
 
-These are rough draft notes and a lot of the info is from the [CPPCon's Halide Demo](https://www.youtube.com/watch?v=1ir_nEfKQ7A) ! At the bottom is code showing how to apply a blur in Halide. 
+Halide lets you write the algorithm once, then experiment with different execution strategies. Want to process 64x64 tiles? Change one line. Want to vectorize differently? Change another line. The computation stays the same. 
+
+The primary use case for Halide is speeding up image processing. The way we achieve speedups is quite different from existing library optimizations like [PyTorch's JIT Compiler](https://residentmario.github.io/pytorch-training-performance-guide/jit.html) or compiler flags like -o3. Instead we separate the algorithm from the schedule (or what to compute from how to optimize it). 
+
+Basic Image Operations:
+
+- Blur, sharpen, edge detection
+- Color space conversions (RGB ↔ YUV, HDR tone mapping)
+- Resize, rotate, geometric transforms
+- Histogram equalization, gamma correction
+
+Theis post are my rough draft notes and a lot of the info is from the [CPPCon's Halide Demo](https://www.youtube.com/watch?v=1ir_nEfKQ7A) ! At the bottom is code showing how to apply a blur in Halide. 
 
 # What is Halide?
 
