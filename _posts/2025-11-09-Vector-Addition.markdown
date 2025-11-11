@@ -110,7 +110,7 @@ Results on H100:
 - 128 and 256 threads/block: Similar performance
   There wasn’t too much of a difference between changing the block size given that there was poor memory coalescing.
 
-Attempt #2: Coalesced Memory Access (H100)
+## Attempt #2: Coalesced Memory Access (H100)
 I rewrote the kernel to ensure coalesced access:
 
 ```cpp
