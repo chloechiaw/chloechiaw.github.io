@@ -6,12 +6,15 @@ categories: jekyll update
 permalink: /vec-add/
 ---
 
-Plain Vector Addition on a B200
-Over the weekend, I was trying to see if I could use CUDA to speed up vector addition. This is the result: #4/465 and one person yassa9 is absolutely mogging everyone with Triton. Substantial GFLOPs difference compared to everyone else (2x more GFLOPs reached than my 445.366/)
+Over the weekend, I was trying to see if I could use CUDA to speed up vector addition. This is the result: 
 
-Vector addition results across all GPUs
+#4/465 and one person yassa9 is absolutely mogging everyone with Triton. 
+Substantial GFLOPs difference compared to everyone else (2x more GFLOPs reached than my 445.366/)
+
+## Vector addition results across all GPUs
 I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. The task was just to add corresponding elements from two input arrays and write the results to an output array, so very simple! At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. I am still learning, so this is a novice worklog describing all the things tried! The language I chose was CUDA, but Tensara lets you submit kernels in Triton, CuTe DSL, etc.
-Initial Approach: Multiple Elements Per Thread
+
+## Initial Approach: Multiple Elements Per Thread
 My first implementation had each thread handle 8 elements (4 from each input array):
 
 ```cpp
@@ -47,8 +50,10 @@ __global__ void vectorAdd(float *d_a, float *d_b, float *d_output, int n) {
 ```
 
 This approach used CUDA's float4 vector type to load 4 floats at once, maximizing the data loaded per instruction. Since CUDA vector types max out at 4 elements, loading 8 elements required two float4 loads per thread.
-The Memory Access Pattern Problem
+
+## The Memory Access Pattern Problem
 Here's where things went wrong. With this approach, the memory access pattern looked like:
+
 Noncoalesced Access Pattern:
 Thread 0: indices 0-7
 Thread 1: indices 8-15
@@ -58,8 +63,10 @@ Within a warp (32 threads executing together), threads were accessing memory in 
 Thread 0 loads bytes 0-31 (8 floats)
 Thread 1 loads bytes 32-63 (8 floats)
 Thread 2 loads bytes 64-95 (8 floats)
+
 This is a problem because threads in a warp access memory in strides of 8 floats, not consecutively. This causes multiple memory transactions instead of one coalesced transaction, wasting precious memory bandwidth.
-Attempt #1: Adjusting Block Size
+
+## Attempt #1: Adjusting Block Size
 My first optimization attempt was just to see how block size tuning impacted GFLOPs.
 Testing different thread counts per block:
 256 threads/block (baseline)
@@ -70,6 +77,7 @@ Results on H100:
 512 and 1024 threads/block: Lower GFLOPS
 128 and 256 threads/block: Similar performance
 There wasn’t too much of a difference between changing the : poor memory coalescing.
+
 Memory Coalescing
 Coalesced Access (Optimal):
 Thread 0: index 0
@@ -83,10 +91,11 @@ Noncoalesced Access (My Original Code):
 Thread 0: indices 0-7
 Thread 1: indices 8-15
 Thread 2: indices 16-23
-...
+
 
 Threads access data in strides → Multiple memory transactions
 Consecutive threads have to access consecutive memory locations
+
 Attempt #2: Coalesced Memory Access (H100)
 I rewrote the kernel to ensure coalesced access:
 
@@ -119,27 +128,14 @@ int stride = blockDim.x \* gridDim.x;
 
 }
 
-Instead of each thread accessing 8 consecutive elements (stride of 8), threads now access elements separated by stride (total number of threads). This ensures:
+Instead of each thread accessing 8 consecutive elements (stride of 8), threads now access elements separated by stride (total number of threads).
+
+This ensures:
 First iteration: Thread 0 → index 0, Thread 1 → index 1, ... (coalesced)
 Second iteration: Thread 0 → index 0+stride, Thread 1 → index 1+stride, ... (coalesced)
+
 Each thread still processes 8 elements total (“computational intensity”, although it’s just vector addition so not thatttt intense)
-Overall
-Implementation
-Memory Pattern
-GFLOPS (B200)
-Notes
-Original (8 elem/thread)
-Noncoalesced
-Baseline
-Stride-8 access
-Single element/thread
-Coalesced
-~Same as baseline
-Low computational intensity
-Optimized (8 elem, strided)
-Coalesced
-Best
-Both coalescing + intensity
+
 
 | Implementation              | Memory Pattern | GFLOPS (B200)     | Notes                       |
 | --------------------------- | -------------- | ----------------- | --------------------------- |
