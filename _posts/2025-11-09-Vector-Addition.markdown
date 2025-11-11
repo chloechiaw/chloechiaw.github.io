@@ -10,9 +10,12 @@ Over the weekend, I was trying to see if I could use CUDA to speed up vector add
 
 ![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
 
-#4/465 submissions and one person yassa9 is absolutely mogging everyone with Triton.
+#4/465 submissions across all GPUs and one person yassa9 is absolutely mogging everyone with Triton.
 There's a substantial GFLOPs difference compared to everyone else (he has 2x more GFLOPs than my kernel)
 
+#2/65 submissions on the B200 leaderboard
+
+![Vector addition results]({{ site.baseurl }}/assets/images/imageb200.png)
 ## TLDR
 
 I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. The task was just to add corresponding elements from two input arrays and write the results to an output array, so very simple :) At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. I am still learning, so this is a novice worklog describing all the things tried! The language I chose was CUDA, but Tensara, the kernels website, lets you submit kernels in Triton, CuTe DSL, etc.
