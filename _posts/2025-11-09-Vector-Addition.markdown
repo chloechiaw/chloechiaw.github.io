@@ -127,7 +127,9 @@ Result: Around the same GFLOPS and latency as the non-coalesced version with 4 e
 Even with coalescing, each thread was only doing 1 operation, reducing computational intensity.
 
 Turns out you can combine both strategies: coalesced memory access and having each thread process multiple elements:
-**global** void vectorAddOptimized(float *d_a, float *d*b, float \_d_output, int n) {
+
+```cpp
+__global__ void vectorAddOptimized(float *d_a, float *d*b, float \_d_output, int n) {
 int tid = blockIdx.x * blockDim.x + threadIdx.x;
 int stride = blockDim.x \* gridDim.x;
 
@@ -138,8 +140,8 @@ int stride = blockDim.x \* gridDim.x;
             d_output[idx] = d_a[idx] + d_b[idx];
         }
     }
-
 }
+```
 
 Instead of each thread accessing 8 consecutive elements (stride of 8), threads now access elements separated by stride (total number of threads).
 
