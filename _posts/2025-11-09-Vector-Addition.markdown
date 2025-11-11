@@ -111,7 +111,7 @@ Results on H100:
   There wasn’t too much of a difference between changing the block size given that there was poor memory coalescing.
 
 ## Attempt #2: Coalesced Memory Access (H100)
-I rewrote the kernel to ensure coalesced access:
+I rewrote the kernel to ensure coalesced access: 
 
 ```cpp
 __global__ void vectorAddCoalesced(float *d_a, float *d_b, float *d_output, int n) {
