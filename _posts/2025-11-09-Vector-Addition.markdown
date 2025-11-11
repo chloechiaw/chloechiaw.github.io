@@ -127,6 +127,7 @@ Result: Around the same GFLOPS and latency as the non-coalesced version with 4 e
 
 Even with coalescing, each thread was only doing 1 operation, reducing computational intensity.
 
+## Attempt #2: Coalesced Memory + Multiple elements/thread
 Turns out you can combine both strategies: coalesced memory access and having each thread process multiple elements:
 
 ```cpp
