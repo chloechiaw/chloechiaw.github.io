@@ -184,7 +184,7 @@ First iteration: Thread 0 → index 0, Thread 1 → index 1, ... (coalesced)
 Second iteration: Thread 0 → index 0+stride, Thread 1 → index 1+stride, ... (coalesced)
 
 Each thread still processes 8 elements total (“computational intensity”, although it’s just vector addition so not thatttt intense)
-
+ 
 | Implementation            | Memory Pattern | GFLOPS (B200)     | Notes                       |
 | ------------------------- | -------------- | ----------------- | --------------------------- |
 | Original (8 elem/thread)  | Noncoalesced   | Baseline          | Stride-8 access             |
