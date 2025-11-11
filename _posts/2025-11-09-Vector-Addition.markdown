@@ -131,17 +131,32 @@ Even with coalescing, each thread was only doing 1 operation, reducing computati
 Turns out you can combine both strategies: coalesced memory access and having each thread process multiple elements:
 
 ```cpp
-__global__ void vectorAddOptimized(float *d_a, float *d*b, float \_d_output, int n) {
-    int tid = blockIdx.x * blockDim.x + threadIdx.x;
-    int stride = blockDim.x \* gridDim.x;
+#include <cuda_runtime.h>
 
-    // Process 8 elements per thread, but with coalesced access
-    for (int i = 0; i < 8; i++) {
-        int idx = tid + i * stride;
-        if (idx < n) {
-            d_output[idx] = d_a[idx] + d_b[idx];
-        }
+__global__ void addKernel(const float* __restrict__ d_input1, 
+                          const float* __restrict__ d_input2, 
+                          float* __restrict__ d_output, size_t n) {
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx = tid * 8;
+    
+    if (idx + 7 < n) {
+        float4 a1 = *reinterpret_cast<const float4*>(&d_input1[idx]);
+        float4 b1 = *reinterpret_cast<const float4*>(&d_input2[idx]);
+        float4 a2 = *reinterpret_cast<const float4*>(&d_input1[idx + 4]);
+        float4 b2 = *reinterpret_cast<const float4*>(&d_input2[idx + 4]);
+        
+        float4 r1 = make_float4(a1.x+b1.x, a1.y+b1.y, a1.z+b1.z, a1.w+b1.w);
+        float4 r2 = make_float4(a2.x+b2.x, a2.y+b2.y, a2.z+b2.z, a2.w+b2.w);
+        
+        *reinterpret_cast<float4*>(&d_output[idx]) = r1;
+        *reinterpret_cast<float4*>(&d_output[idx + 4]) = r2;
     }
+}
+
+extern "C" void solution(const float* d_input1, const float* d_input2, float* d_output, size_t n) {
+    dim3 blockSize(1024);
+    dim3 gridSize((n/8 + blockSize.x - 1) / blockSize.x);
+    addKernel<<<gridSize, blockSize>>>(d_input1, d_input2, d_output, n);
 }
 ```
 
