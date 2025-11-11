@@ -13,10 +13,6 @@ Over the weekend, I was trying to see if I could use CUDA to speed up vector add
 #4/465 submissions across all GPUs and one person yassa9 is absolutely mogging everyone with Triton.
 There's a substantial GFLOPs difference compared to everyone else (he has 2x more GFLOPs than my kernel)
 
-#2/65 submissions on the B200 leaderboard
-
-![B200 leaderboard](/assets/images/imageb200.png)
-
 ## TLDR
 
 I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. The task was just to add corresponding elements from two input arrays and write the results to an output array, so very simple :) At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. I am still learning, so this is a novice worklog describing all the things tried! The language I chose was CUDA, but Tensara, the kernels website, lets you submit kernels in Triton, CuTe DSL, etc.
@@ -119,8 +115,6 @@ __global__ void vectorAddCoalesced(float *d_a, float *d_b, float *d_output, int 
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (idx < n) {
-        // Each thread handles ONE element
-        // Thread i accesses index i → coalesced!
         d_output[idx] = d_a[idx] + d_b[idx];
     }
 }
@@ -134,8 +128,8 @@ Turns out you can combine both strategies: coalesced memory access and having ea
 
 ```cpp
 __global__ void vectorAddOptimized(float *d_a, float *d*b, float \_d_output, int n) {
-int tid = blockIdx.x * blockDim.x + threadIdx.x;
-int stride = blockDim.x \* gridDim.x;
+    int tid = blockIdx.x * blockDim.x + threadIdx.x;
+    int stride = blockDim.x \* gridDim.x;
 
     // Process 8 elements per thread, but with coalesced access
     for (int i = 0; i < 8; i++) {
@@ -159,6 +153,6 @@ Each thread still processes 8 elements total (“computational intensity”, alt
 | --------------------------- | -------------- | ----------------- | --------------------------- |
 | Original (8 elem/thread)    | Noncoalesced   | Baseline          | Stride-8 access             |
 | Single element/thread       | Coalesced      | ~Same as baseline | Low computational intensity |
-| Optimized (8 elem, strided) | Coalesced      | Best              | Both coalescing + intensity |
+| Optimized (8 elem/thread) | Coalesced      | Best              | Both coalescing + intensity |
 
 Not a kernel expert but even this implementation seems pretty rudimentary. However, I think these problems are a good way to feel like I'm "discovering" these strategies one at a time which makes it more fun!
