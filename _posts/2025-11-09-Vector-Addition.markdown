@@ -97,7 +97,7 @@ Consecutive threads have to access consecutive memory locations
 
 My first optimization attempt was just to see how block size tuning impacted GFLOPs.
 
-Testing different thread counts per block:
+Testing different thread counts per block: 
 
 - 256 threads/block (baseline)
 - 128 threads/block (allows more blocks per SM, often good for memory-bound operations)
