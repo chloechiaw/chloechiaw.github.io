@@ -6,16 +6,19 @@ categories: jekyll update
 permalink: /vec-add/
 ---
 
-Over the weekend, I was trying to see if I could use CUDA to speed up vector addition on [Tensara](https://tensara.org/leaderboard/vector-addition?gpu=all). At the end of the weekend, my kernel ranked second in the B200 category and fourth across all GPUs on the Tensara platform (L4, A100, H100, B200, etc).
+Over the weekend, I was trying to see if I could use CUDA to speed up vector addition on [Tensara](https://tensara.org/leaderboard/vector-addition?gpu=all). I wanted to see how we apply coalesced memory to a simple task such as vector addition! The kernel ranked 2nd in the B200 category and 4th across all GPUs availbale on the Tensara platform (L4, A100, H100, B200, etc).
 
 ![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
 
-#4/465 submissions across all GPUs and one person yassa9 is absolutely mogging everyone with Triton.
-There's a substantial GFLOPs difference compared to everyone else (he has 2x more GFLOPs than my kernel)
+#4/465 submissions across all GPUs and user, yassa9, is absolutely mogging everyone with Triton LOL. There's a substantial GFLOPs diff compared to everyone else (he has 2x more GFLOPs than my kernel)
+
+I am still learning, so this is a novice worklog describing all the things tried! This post is inspired by this wonderful [worklog](https://maharshi.bearblog.dev/optimizing-softmax-cuda/) 
 
 ## TLDR
 
-I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. The task was just to add corresponding elements from two input arrays and write the results to an output array, so very simple :) At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. I am still learning, so this is a novice worklog describing all the things tried! The language I chose was CUDA, but Tensara, the kernels website, lets you submit kernels in Triton, CuTe DSL, etc.
+I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. 
+
+At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. The language I chose was CUDA, but Tensara, the kernels website, lets you submit kernels in Triton, CuTe DSL, etc.
 
 ## Initial Approach: Multiple Elements Per Thread, Noncoalesced
 
