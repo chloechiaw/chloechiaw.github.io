@@ -6,15 +6,19 @@ categories: jekyll update
 permalink: /vec-add/
 ---
 
-Over the weekend, I was trying to see if I could use CUDA to speed up vector addition. This is the result: 
+Over the weekend, I was trying to see if I could use CUDA to speed up vector addition. This is the result:
 
-#4/465 and one person yassa9 is absolutely mogging everyone with Triton. 
-Substantial GFLOPs difference compared to everyone else (2x more GFLOPs reached than my 445.366/)
+![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
+
+#4/465 and one person yassa9 is absolutely mogging everyone with Triton.
+There's a substantial GFLOPs difference compared to everyone else (2x more GFLOPs reached than my 445.366/)
 
 ## Vector addition results across all GPUs
+
 I was working on optimizing a memory-bound kernel for vector addition on NVIDIA H100 and B200 GPUs. The task was just to add corresponding elements from two input arrays and write the results to an output array, so very simple! At first I just played around with low hanging fruit such as block size (since the max is 1024 threads per block on an H100) to see what the performance benefits were but then tried to use more logical approaches such as coalesced memory access. I am still learning, so this is a novice worklog describing all the things tried! The language I chose was CUDA, but Tensara lets you submit kernels in Triton, CuTe DSL, etc.
 
 ## Initial Approach: Multiple Elements Per Thread
+
 My first implementation had each thread handle 8 elements (4 from each input array):
 
 ```cpp
@@ -52,6 +56,7 @@ __global__ void vectorAdd(float *d_a, float *d_b, float *d_output, int n) {
 This approach used CUDA's float4 vector type to load 4 floats at once, maximizing the data loaded per instruction. Since CUDA vector types max out at 4 elements, loading 8 elements required two float4 loads per thread.
 
 ## The Memory Access Pattern Problem
+
 Here's where things went wrong. With this approach, the memory access pattern looked like:
 
 Noncoalesced Access Pattern:
@@ -67,6 +72,7 @@ Thread 2 loads bytes 64-95 (8 floats)
 This is a problem because threads in a warp access memory in strides of 8 floats, not consecutively. This causes multiple memory transactions instead of one coalesced transaction, wasting precious memory bandwidth.
 
 ## Attempt #1: Adjusting Block Size
+
 My first optimization attempt was just to see how block size tuning impacted GFLOPs.
 Testing different thread counts per block:
 256 threads/block (baseline)
@@ -92,7 +98,6 @@ Thread 0: indices 0-7
 Thread 1: indices 8-15
 Thread 2: indices 16-23
 
-
 Threads access data in strides → Multiple memory transactions
 Consecutive threads have to access consecutive memory locations
 
@@ -114,8 +119,8 @@ __global__ void vectorAddCoalesced(float *d_a, float *d_b, float *d_output, int 
 Result: Same GFLOPS and latency as the non-coalesced version with 4 elements per thread.
 Wait, what? After all that work, performance was identical? This seemed counterintuitive until I realized: even with coalescing, each thread was only doing 1 operation, reducing computational intensity.
 Turns out you can combine both strategies: coalesced memory access and having each thread process multiple elements:
-**global** void vectorAddOptimized(float *d_a, float *d_b, float _d_output, int n) {
-int tid = blockIdx.x _ blockDim.x + threadIdx.x;
+**global** void vectorAddOptimized(float *d_a, float *d*b, float \_d_output, int n) {
+int tid = blockIdx.x * blockDim.x + threadIdx.x;
 int stride = blockDim.x \* gridDim.x;
 
     // Process 8 elements per thread, but with coalesced access
@@ -135,7 +140,6 @@ First iteration: Thread 0 → index 0, Thread 1 → index 1, ... (coalesced)
 Second iteration: Thread 0 → index 0+stride, Thread 1 → index 1+stride, ... (coalesced)
 
 Each thread still processes 8 elements total (“computational intensity”, although it’s just vector addition so not thatttt intense)
-
 
 | Implementation              | Memory Pattern | GFLOPS (B200)     | Notes                       |
 | --------------------------- | -------------- | ----------------- | --------------------------- |
