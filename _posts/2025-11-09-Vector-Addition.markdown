@@ -11,7 +11,7 @@ Over the weekend, I was trying to see if I could use CUDA to speed up vector add
 ![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
 
 #4/465 submissions and one person yassa9 is absolutely mogging everyone with Triton.
-There's a substantial GFLOPs difference compared to everyone else (2x more GFLOPs reached than my 445.366/)
+There's a substantial GFLOPs difference compared to everyone else (he has 2x more GFLOPs than my kernel)
 
 ## TLDR
 
