@@ -157,4 +157,4 @@ Each thread still processes 8 elements total (“computational intensity”, alt
 | Single element/thread       | Coalesced      | ~Same as baseline | Low computational intensity |
 | Optimized (8 elem, strided) | Coalesced      | Best              | Both coalescing + intensity |
 
-Not a kernel expert but even this implementation seems pretty rudimentary. However, I think these problems are a good way to feel like you are "discovering" these strategies one at a time which makes it more fun!
+Not a kernel expert but even this implementation seems pretty rudimentary. However, I think these problems are a good way to feel like I'm "discovering" these strategies one at a time which makes it more fun!
