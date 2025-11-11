@@ -110,6 +110,26 @@ Results on H100:
 - 128 and 256 threads/block: Similar performance
   There wasn’t too much of a difference between changing the block size given that there was poor memory coalescing.
 
+```cpp
+#include <cuda_runtime.h>
+
+__global__ void addKernel(const float* d_input1, const float* d_input2, float* d_output, size_t n) {
+    int i = blockIdx.x * blockDim.x + threadIdx.x;
+    int idx = i * 4;
+    
+    if (idx + 3 < n) {
+        float4 a = *reinterpret_cast<const float4*>(&d_input1[idx]);
+        float4 b = *reinterpret_cast<const float4*>(&d_input2[idx]);
+        float4 result = make_float4(a.x + b.x, a.y + b.y, a.z + b.z, a.w + b.w);
+        *reinterpret_cast<float4*>(&d_output[idx]) = result;
+    }
+}
+
+extern "C" void solution(const float* d_input1, const float* d_input2, float* d_output, size_t n) {
+    dim3 blockSize(512);
+    dim3 gridSize((n/4 + 511) / 512);  // Each thread handles 4 elements
+    addKernel<<<gridSize, blockSize>>>(d_input1, d_input2, d_output, n);
+```
 ## Attempt #2: Coalesced Memory Access (H100)
 I rewrote the kernel to ensure coalesced access: 
 
