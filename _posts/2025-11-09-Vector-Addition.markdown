@@ -6,7 +6,7 @@ categories: jekyll update
 permalink: /vec-add/
 ---
 
-Over the weekend, I was trying to see if I could use CUDA to speed up vector addition. At the end of the weekend, my kernel ranked second in the B200 category and fourth across all GPUs on the Tensara platform (L4, A100, H100, B200, etc).
+Over the weekend, I was trying to see if I could use CUDA to speed up vector addition on [Tensara](https://tensara.org/leaderboard/vector-addition?gpu=all). At the end of the weekend, my kernel ranked second in the B200 category and fourth across all GPUs on the Tensara platform (L4, A100, H100, B200, etc).
 
 ![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
 
@@ -149,10 +149,10 @@ Second iteration: Thread 0 → index 0+stride, Thread 1 → index 1+stride, ... 
 
 Each thread still processes 8 elements total (“computational intensity”, although it’s just vector addition so not thatttt intense)
 
-| Implementation              | Memory Pattern | GFLOPS (B200)     | Notes                       |
-| --------------------------- | -------------- | ----------------- | --------------------------- |
-| Original (8 elem/thread)    | Noncoalesced   | Baseline          | Stride-8 access             |
-| Single element/thread       | Coalesced      | ~Same as baseline | Low computational intensity |
+| Implementation            | Memory Pattern | GFLOPS (B200)     | Notes                       |
+| ------------------------- | -------------- | ----------------- | --------------------------- |
+| Original (8 elem/thread)  | Noncoalesced   | Baseline          | Stride-8 access             |
+| Single element/thread     | Coalesced      | ~Same as baseline | Low computational intensity |
 | Optimized (8 elem/thread) | Coalesced      | Best              | Both coalescing + intensity |
 
 Not a kernel expert but even this implementation seems pretty rudimentary. However, I think these problems are a good way to feel like I'm "discovering" these strategies one at a time which makes it more fun!
