@@ -6,7 +6,7 @@ categories: jekyll update
 permalink: /vec-add/
 ---
 
-Over the weekend, I was trying to see if I could use CUDA to speed up vector addition on [Tensara](https://tensara.org/leaderboard/vector-addition?gpu=all). I wanted to see how we apply coalesced memory to a simple task such as vector addition! The kernel ranked 2nd in the B200 category and 4th across all GPUs availbale on the Tensara platform (L4, A100, H100, B200, etc).
+Over the weekend, I was trying to see if I could use CUDA to speed up a simple task, vector addition, on [Tensara](https://tensara.org/leaderboard/vector-addition?gpu=all). Specifically, the differences between block sizes and noncoalesced/coalesced memory. The kernel ranked 2nd in the B200 category and 4th across all GPUs available on the Tensara platform (L4, A100, H100, B200, etc).
 
 ![Vector addition results]({{ site.baseurl }}/assets/images/image.png)
 
@@ -127,18 +127,7 @@ extern "C" void solution(const float* d_input1, const float* d_input2, float* d_
     dim3 gridSize((n/4 + 511) / 512);  
     addKernel<<<gridSize, blockSize>>>(d_input1, d_input2, d_output, n);
 ```
-## Attempt #2: Coalesced Memory Access (H100)
-I rewrote the kernel to ensure coalesced access: 
 
-```cpp
-__global__ void vectorAddCoalesced(float *d_a, float *d_b, float *d_output, int n) {
-    int idx = blockIdx.x * blockDim.x + threadIdx.x;
-
-    if (idx < n) {
-        d_output[idx] = d_a[idx] + d_b[idx];
-    }
-}
-```
 
 Result: Around the same GFLOPS and latency as the non-coalesced version with 4 elements per thread.
 
