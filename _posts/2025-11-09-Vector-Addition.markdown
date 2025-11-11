@@ -27,17 +27,15 @@ My first implementation had each thread handle 8 elements (4 from each input arr
 ```cpp
 __global__ void vectorAdd(float *d_a, float *d_b, float *d_output, int n) {
     int idx = blockIdx.x * blockDim.x + threadIdx.x;
-    int base = idx * 8;  // Each thread handles 8 elements
+    int base = idx * 8;
 
     if (base + 7 < n) {
-        // Load 4 floats at once using float4
         float4 a1 = reinterpret_cast<float4*>(d_a)[base/4];
         float4 a2 = reinterpret_cast<float4*>(d_a)[base/4 + 1];
 
         float4 b1 = reinterpret_cast<float4*>(d_b)[base/4];
         float4 b2 = reinterpret_cast<float4*>(d_b)[base/4 + 1];
 
-        // Compute sums
         float4 result1, result2;
         result1.x = a1.x + b1.x;
         result1.y = a1.y + b1.y;
@@ -49,7 +47,6 @@ __global__ void vectorAdd(float *d_a, float *d_b, float *d_output, int n) {
         result2.z = a2.z + b2.z;
         result2.w = a2.w + b2.w;
 
-        // Write back
         reinterpret_cast<float4*>(d_output)[base/4] = result1;
         reinterpret_cast<float4*>(d_output)[base/4 + 1] = result2;
     }
@@ -127,7 +124,7 @@ __global__ void addKernel(const float* d_input1, const float* d_input2, float* d
 
 extern "C" void solution(const float* d_input1, const float* d_input2, float* d_output, size_t n) {
     dim3 blockSize(512);
-    dim3 gridSize((n/4 + 511) / 512);  // Each thread handles 4 elements
+    dim3 gridSize((n/4 + 511) / 512);  
     addKernel<<<gridSize, blockSize>>>(d_input1, d_input2, d_output, n);
 ```
 ## Attempt #2: Coalesced Memory Access (H100)
