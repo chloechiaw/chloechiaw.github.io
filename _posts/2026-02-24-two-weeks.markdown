@@ -66,7 +66,9 @@ The SGLang and vLLM backends both accept **kwargs that get forwarded to the unde
 
 ## Thoughts on Orbax
 TLDR just spent some time in tree surgery land
+
 Main difference between Pytorch and Jax: In PyTorch, saving a checkpoint is two lines. As long as the model hasn't changed, it just works
+
 For GRPO training on Jax, I Used Qwiz to add the Lora layers, and Qwix made the injection surprisingly clean: Three lines to define the provider, one call to apply it to the model.
 
 ```python
