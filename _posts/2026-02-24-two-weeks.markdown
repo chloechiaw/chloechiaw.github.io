@@ -115,7 +115,7 @@ nnx.update(
 
 Jax also sorts dictionary keys for traversal so keys need to be able to be compared, so I had to convert strings into integers. The main Pytorch vs Jax difference was that you need to understand its expectations before anything works: the right subdirectory layout, an exactly matching pytree structure on restore, and consistent key types throughout your state dict. Whereas if I added a LoRA adapter in Pytorch, it doesn’t break checkpoint loading because it’s lenient about new keys by passing ins strict=False (I believe it just loads what it cans). But in orbax, a pytree structure change means there are new leaf nodes so if the shapes differ, it errors. When something goes wrong, the errors point at tree mismatches rather than telling you what actually needs to change.
 
-## Using all these together:
+## Using all frameworks together:
 
 It's quite different from the PyTorch world where you call model.train() and optimizer.step() which mutate parameters in place. In JAX, there's no model object holding state, there's a pytree of parameters you pass into a function. There’s also no optimizer with hidden momentum buffers,  there's an Optax state pytree you carry alongside the parameters.
 
