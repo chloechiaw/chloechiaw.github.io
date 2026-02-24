@@ -6,7 +6,7 @@ categories: jekyll update
 permalink: /two-weeks/
 ---
 
-It's been lots of fun trying TPUs over winter break on Kaggle! Kaggle gives you a TPU v5-8 (8 chips connected in a single pods) which is pretty incredible. I could set up a mesh like (8, 1) for FSDP and model weights get sharded across all 8 chips automatically. 
+It's been lots of fun trying TPUs over winter break on Kaggle! Kaggle gives you a TPU v5e-8 (8 chips connected in a single pods) which is pretty incredible. I could set up a mesh like (8, 1) for FSDP and model weights get sharded across all 8 chips automatically (this was mostly used on Gemma 3 12B, 27B)
 
 The only catch is you only get 20 hours/week which was a bit tight. The task I was looking at was post-training with Tunix for high quality reasoning traces on Gemma 3 1B-IT (instruction tuned), but this post will talk more about the quirks of trying out JAX/Tunix/Qwix/Orbax since I think it differs from the PyTorch ecosystem quite a bit.
 
