@@ -16,7 +16,7 @@ This log is inspired by Daniel Han from Unsloth's Gemma bug fixes post! Also obl
 
 We ran into a mysterious bug while running our NemotronH 30B-A3B config through Automodel. Starting at step 0 in the first forward pass, we'd get loss=NaN and grad_norm=0.0 no matter what. The framework would not yell anything or throw any assert errors. 
 
-![alt text](IMG_6869.png)
+![alt text]({{ site.baseurl }}/assets/images/IMG_6869.png)
 
 Our parameters were being loaded correctly. It wasn't exploding gradients either. I then added debug prints at the entry points of each layer and narrowed it down to the first Mamba layer was already producing NaN output. Looking into this further, it turned out to be two separate bugs— one in FSDP2's mixed-precision policy, and one in weight initialization.
 
@@ -40,6 +40,6 @@ The function walks every parameter: normal distribution for weights, zeros for b
 
 # Yay loss is no longer NaN! 
 
-![alt text](IMG_3010.png)
+![alt text]({{ site.baseurl }}/assets/images/IMG_3010.png)
 # PR
 https://github.com/NVIDIA-NeMo/Automodel/pull/1527
