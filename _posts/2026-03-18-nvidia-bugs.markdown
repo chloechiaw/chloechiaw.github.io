@@ -6,7 +6,7 @@ categories: jekyll update
 permalink: /nvidia-bug-hunting/
 ---
 
-For a class project at UC Berkeley, my group and I were tasked with pre-training NemotronH (a hybrid mambda-transformer MoE) without checkpoints, using NVIDIA's Automodel training framework. This seems like a pretty expected flow as NemotronH is an NVIDIA model and Automodel is an NVIDIA training framework/library, but we ran into a few hiccups that taught us a lot about how NVIDIA structures their repo as it's pretty opinionated/biased towards a few workflows. These are bugs that specifically on the NVIDIA Automodel repository. 
+For a class project at UC Berkeley, my group and I were tasked with pre-training NemotronH (a hybrid mambda-transformer MoE) without checkpoints, using NVIDIA's Automodel training framework. This seems like a pretty expected flow as NemotronH is an NVIDIA model and Automodel is an NVIDIA training framework/library, but we ran into a few hiccups that taught us a lot about how NVIDIA structures their repo as it's pretty opinionated/biased towards a few workflows. These are bugs that specifically on the NVIDIA Automodel repository. Also this is probably a super common bug (NaNs in training loop) but learned a lot from it!
 
 Automodel repository itself also has a good amount of pretraining recipes, alongside posttraining. It makes sense that NVIDIA expects people to use the `from_pretrained` path, which works great because the typical workflow is download someone’s weights from HuggingFace then finetune. 
 
