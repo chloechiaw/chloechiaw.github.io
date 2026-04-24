@@ -1,7 +1,7 @@
 ---
 layout: post
 title: "🐛 🐛 NVIDIA NemoTron and Automodel Bug-hunting"
-date: 2026-03-18
+date: 2026-04-24
 categories: jekyll update
 permalink: /nvidia-bug-hunting/
 ---
