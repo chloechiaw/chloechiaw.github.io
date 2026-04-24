@@ -40,6 +40,6 @@ The function walks every parameter: normal distribution for weights, zeros for b
 
 # Yay loss is no longer NaN! 
 
-![alt text]({{ site.baseurl }}/assets/images/IMG_3010.png)
-# PR
-https://github.com/NVIDIA-NeMo/Automodel/pull/1527
+![No longer NaN]({{ site.baseurl }}/assets/images/IMG_3010.png)
+
+[`Code`](https://github.com/NVIDIA-NeMo/Automodel/pull/1527)    
