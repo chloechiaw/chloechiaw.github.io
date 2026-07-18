@@ -6,25 +6,28 @@ categories: jekyll update
 permalink: /hardware-lottery/
 ---
 
-There's been a lot of discourse lately about the lottery—which places got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops verseas still make really great open models that hold their own, at least in a benchmar setting. 
+There's been a lot of discourse lately about the lottery—which places got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops verseas still make really great open models that hold their own, at least in a benchmark setting. 
 
-I wanted to guess that there weren't that many distinct problems that we throw kernels at. If we take a look at recent ones:
+I wanted to guess that there weren't that many distinct problems that we throw kernels at in a performance setting. If we take a look at recent ones:
 
-Deepseek 
-- Flash MLA (Attention Variant)
-- Deep EP (Comms)
+**DeepSeek**
+- [Flash MLA](https://github.com/deepseek-ai/FlashMLA) (attention variant)
+- [DeepEP](https://github.com/deepseek-ai/DeepEP) (comms)
 
-Qwen 
-- Chunked GDN (Attention Variant)
+**Qwen**
+- [Chunked GDN](https://arxiv.org/abs/2412.06464) (attention variant)
 
-Kimi 
-- Delta Attention (Attention Variant) 
-- latentMoE and Quantile Balancing (Mixture of Experts Routers)
+**Kimi**
+- [Delta Attention](https://arxiv.org/abs/2510.26692) (attention variant)
+- latentMoE and quantile balancing (Mixture-of-Experts routers)
 
+What if you zoom out and label the traits of those operations rather than the operations themselves?
 
-What if you zoom out and label the traits of those operations rather than the operations themselves?  If the whole zoo really does reduce to a handful of shapes, then the map isn't mostly explored — it's mostly empty. For example, attention and a plain matrix multiply. They are similar because every output is a blend of every input, so you walk through the inputs a tile at a time, keep a running total, and never hold the whole thing at once. Attention just slips a softmax into the middle of that walk. 
+For example, attention and a plain matrix multiply. They are similar because every output is a blend of every input, so you walk through the inputs a tile at a time, keep a running total, and never hold the whole thing at once. Attention just slips a softmax into the middle of that walk. 
 
-Other kernel libraries like tokamax from XLA and Quack from Tri Dao also have kernels that cover these three categories. The last column is Mixture of Experts, and the architecture ha spresented an interesting new space forming its own category, mostly due to load balancing. 
+A lot of this collapses into a really small set of shapes. This might seem surprising, since within attention alone there are so many cool tricks — GQA and MQA sharing key/value heads, MLA compressing the KV cache into a latent, sliding-window and block-sparse attention skipping most of the matrix, PagedAttention rethinking how the cache is stored, ring attention splitting the sequence across GPUs. On paper they look like six different ideas. But the actual move each one makes on the GPU is nearly identical: load a tile of queries, stream the keys and values past it a block at a time, keep a running max and running sum (online softmax), accumulate into the output, and never once write the full N×N score matrix to memory. The tricks change *which* keys and values you bother to load, or how you store them, not the walk itself.
+
+Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
 # Categorizing the "shapes" of operations
 
@@ -36,30 +39,30 @@ Other kernel libraries like tokamax from XLA and Quack from Tri Dao also have ke
 | **Bound by** | Memory bandwidth | Compute | (the irregularity) |
 | **The move** | Fuse into a neighbor, never a standalone kernel | Tile + online softmax | Isolate the irregularity, so more of the work stays regular dense work |
 
-We can visualize these primitives like this: 
+We can visualize these primitives like this:
 
-![Independent](/Users/chloe/Desktop/chloechiaw.github.io/assets/images/op_independent.png)
-![Reduction](/Users/chloe/Desktop/chloechiaw.github.io/assets/images/op_allpairs.png)
-![Data-Dependent](/Users/chloe/Desktop/chloechiaw.github.io/assets/images/op_datadependent.png)
+![Independent](/assets/images/op_independent.png)
+![Reduction](/assets/images/op_allpairs.png)
+![Data-Dependent](/assets/images/op_datadependent.png)
 
-Uncharted territory aka possibly new shapes: 
+## Uncharted territory (aka possibly new shapes)
 
-1. Running state (linear attention variants and state-space family)
-- post-Mamba-2-influence
-- Qwen's Gated DeltaNet layers 
-- Recently, Kimi Linear and Kimi Delta Attention in Kimi K3.
+**1. Running state** — linear-attention variants and the state-space family.
 
+- Post-[Mamba-2](https://arxiv.org/abs/2405.21060) influence
+- Qwen's [Gated DeltaNet](https://arxiv.org/abs/2412.06464) layers
+- Recently, [Kimi Linear](https://arxiv.org/abs/2510.26692) and Kimi Delta Attention in Kimi K3
 
-Even though there are many varints of linea attention, I'm labelling it under the same primitive. Basic moves are fixed state that's updated per token, with a correction or gate to fight forgetting. This all lives in the same kernel. 
+Even though there are many variants of linear attention, I'm labelling them all under the same primitive. The basic move is a fixed state that's updated per token, with a correction or gate to fight forgetting — and it all lives in the same kernel.
 
-2. Mixture of Experts 
-- I think this space will be really intersting! Ccause right now most advancements are like Deepseek Auxiliary loss or quantile balancing for healthy routing.
-- ktransformers is a project that experiments with saving memory by just loading more stuff on the cpu (for example, your experts).
-- DeepEP, all-to-all done really well for MoE dispatch/combine. 
+**2. Mixture of Experts.**
 
+- I think this space will be really interesting! Right now most of the advancements are things like DeepSeek's [auxiliary-loss-free load balancing](https://arxiv.org/abs/2408.15664) or quantile balancing for healthy routing.
+- [ktransformers](https://github.com/kvcache-ai/ktransformers) is a project that experiments with saving memory by loading more stuff on the CPU (your experts, for example).
+- [DeepEP](https://github.com/deepseek-ai/DeepEP) — all-to-all done really well for MoE dispatch/combine.
 
-3. Megakernels
+**3. Megakernels.**
 
-![alt text](megakernel.png)
+![Megakernel](/assets/images/megakernel.png)
 
-The core shapes we throw kernels at really do seem to collapse into a surprisingly small set. I'm excited to see if there are new patterns that emerge! 
+The core shapes we throw kernels at really do seem to collapse into a surprisingly small set. I'm excited to see what new patterns emerge!
