@@ -1,14 +1,14 @@
 ---
 layout: post
-title: ""
+title: "Unrigging the hardware lottery"
 date: 2026-07-17
 categories: jekyll update
 permalink: /hardware-lottery/
 ---
 
-There's been a lot of discourse lately about the lottery—which labs got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops verseas still make really great open models that hold their own, at least in a benchmar setting. 
+There's been a lot of discourse lately about the lottery—which places got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops verseas still make really great open models that hold their own, at least in a benchmar setting. 
 
-I wanted to guess that there weren't that many disticnt problems that we throw kernels at. If we take a look at recent ones:
+I wanted to guess that there weren't that many distinct problems that we throw kernels at. If we take a look at recent ones:
 
 Deepseek 
 - Flash MLA (Attention Variant)
