@@ -43,7 +43,7 @@ Let's label these operations in a table:
 
 We can visualize these primitives like this:
 
-![alt text](all_three.png)
+![alt text](assets/images/all_three.png)
 
 Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
