@@ -8,11 +8,13 @@ permalink: /hardware-lottery/
 
 There's been a lot of discourse lately about the lottery—which places got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops overseas still make really great open models that hold their own, at least in a benchmark setting!
 
-On the flip side, let's set aside the hardware lottery discussion from the US China export controls, supply chain, yada discussion. There is also a hardware lottery between just  your engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack! Realistic MFUs today are humbling. A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, but Mixture of Experts specifically still lands frighteningly low. 
+On the flip side, let's set aside the hardware lottery discussion from the US China export controls/ supply chain/ discussion. You can also say there is a hardware lottery between you as the engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack.
+
+Realistically MFUs today are so challenging! A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, and Mixture of Experts specifically still lands frighteningly low. 
 
 <img src="/assets/images/haha.png" alt="alt text" width="450">
 
-That made me guess that maybe the search space we've explored in performance tricks is pretty small. This might sound a bit strange, cause if we take a look at novel methods in the last year, they seem pretty diverse: 
+That made me guess that maybe the territory in performance tricks is pretty unexplored. This might sound a bit strange, cause if we take a look at novel methods in the last year, they seem pretty diverse: 
 
 **DeepSeek**
 - [Flash MLA](https://github.com/deepseek-ai/FlashMLA) (attention variant)
@@ -29,9 +31,9 @@ But... what if we zoom out and label the traits of those operations rather than 
 
 While seeing all these recent buzz around new methods, I wonder if a lot of these tricks can collapse into a really small set of basic operations, or primitives. This might seem surprising, since within attention alone there are so many cool tricks — GQA and MQA sharing key/value heads, MLA compressing the KV cache into a latent, sliding-window and block-sparse attention skipping most of the matrix, PagedAttention rethinking how the cache is stored, ring attention splitting the sequence across GPUs. On paper they look like six different ideas. But the actual move each one makes on the GPU is nearly identical: load a tile of queries, stream the keys and values past it a block at a time, keep a running max and running sum (online softmax), accumulate into the output, and never once write the full N×N score matrix to memory. The tricks change *which* keys and values you bother to load, or how you store them, not the walk itself.
 
-Let's label these operations in a table: 
+Categorizing the "shapes" of operations... 
 
-# Categorizing the "shapes" of operations
+# Primitives
 
 | | Independent | Reduction | Data-dependent |
 | :--- | :--- | :--- | :--- |
@@ -47,7 +49,7 @@ We can visualize these primitives like this:
 
 Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
-## Uncharted territory (aka possibly new shapes)
+# Uncharted territory (aka possibly new shapes)
 **1. Running state** — linear-attention variants and the state-space family.
 
 - Post-[Mamba-2](https://arxiv.org/abs/2405.21060) influence
