@@ -67,7 +67,8 @@ Even though there are many variants of linear attention, I'm labelling them all 
 
 **3. Megakernels.**
 
-<img src="/assets/images/megakernel.png" alt="Megakernel" width="450"> from https://www.cs.cmu.edu/~zhihaoj2/15-779/slides/07-mega-kernel.pdf
+<img src="/assets/images/megakernel.png" alt="Megakernel" width="450"> 
+from https://www.cs.cmu.edu/~zhihaoj2/15-779/slides/07-mega-kernel.pdf
 
 The core shapes we throw kernels at might collapse into a surprisingly small set. I'm excited to see what new patterns emerge that can create new "movements" on the GPU. 
 
