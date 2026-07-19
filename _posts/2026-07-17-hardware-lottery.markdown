@@ -30,6 +30,7 @@ But... what if we zoom out and label the traits of those operations rather than 
 While seeing all these recent buzz around new methods, I wonder if a lot of these tricks can collapse into a really small set of basic operations, or primitives. This might seem surprising, since within attention alone there are so many cool tricks — GQA and MQA sharing key/value heads, MLA compressing the KV cache into a latent, sliding-window and block-sparse attention skipping most of the matrix, PagedAttention rethinking how the cache is stored, ring attention splitting the sequence across GPUs. On paper they look like six different ideas. But the actual move each one makes on the GPU is nearly identical: load a tile of queries, stream the keys and values past it a block at a time, keep a running max and running sum (online softmax), accumulate into the output, and never once write the full N×N score matrix to memory. The tricks change *which* keys and values you bother to load, or how you store them, not the walk itself.
 
 Let's label these operations in a table: 
+
 # Categorizing the "shapes" of operations
 
 | | Independent | Reduction | Data-dependent |
@@ -47,7 +48,6 @@ We can visualize these primitives like this:
 Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
 ## Uncharted territory (aka possibly new shapes)
-
 **1. Running state** — linear-attention variants and the state-space family.
 
 - Post-[Mamba-2](https://arxiv.org/abs/2405.21060) influence
@@ -65,7 +65,7 @@ Even though there are many variants of linear attention, I'm labelling them all 
 
 **3. Megakernels.**
 
-![Megakernel](/assets/images/megakernel.png)
+![Megakernel](/assets/images/megakernel.png) from https://www.cs.cmu.edu/~zhihaoj2/15-779/slides/07-mega-kernel.pdf
 
 
 The core shapes we throw kernels at might collapse into a surprisingly small set. I'm excited to see what new patterns emerge that can create new "movements" on the GPU. 
