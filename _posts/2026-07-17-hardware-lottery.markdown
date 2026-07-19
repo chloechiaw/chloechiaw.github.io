@@ -10,7 +10,7 @@ There's been a lot of discourse lately about the lottery—which places got the 
 
 On the flip side, let's set aside the hardware lottery discussion from the US China export controls/ supply chain/ discussion. You can also say there is a hardware lottery between you as the engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack.
 
-Realistically MFUs today are so challenging! A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, and Mixture of Experts specifically still lands frighteningly low. 
+Realistic MFUs today are so challenging! A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, and Mixture of Experts specifically still lands frighteningly low. 
 
 <img src="/assets/images/haha.png" alt="alt text" width="450">
 
