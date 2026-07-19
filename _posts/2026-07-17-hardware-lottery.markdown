@@ -43,7 +43,9 @@ Let's label these operations in a table:
 
 We can visualize these primitives like this:
 
-![alt text](assets/images/all_three.png)
+![alt text](/assets/images/haha.png)
+
+![alt text](/assets/images/all_three.png)
 
 Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
@@ -66,7 +68,6 @@ Even though there are many variants of linear attention, I'm labelling them all 
 **3. Megakernels.**
 
 ![Megakernel](/assets/images/megakernel.png) from https://www.cs.cmu.edu/~zhihaoj2/15-779/slides/07-mega-kernel.pdf
-
 
 The core shapes we throw kernels at might collapse into a surprisingly small set. I'm excited to see what new patterns emerge that can create new "movements" on the GPU. 
 
