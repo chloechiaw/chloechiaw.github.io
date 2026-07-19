@@ -42,10 +42,7 @@ Let's label these operations in a table:
 
 We can visualize these primitives like this:
 
-![Independent](/assets/images/op_independent.png)
-![Reduction](/assets/images/op_allpairs.png)
-![Data-Dependent](/assets/images/op_datadependent.png)
-
+![alt text](all_three.png)
 
 Other kernel libraries — [tokamax](https://github.com/openxla/tokamax) from OpenXLA and [Quack](https://github.com/Dao-AILab/quack) from Tri Dao — cover these same three categories too. The last column, data-dependent, is mostly Mixture of Experts, and that architecture has presented an interesting new space forming its own category, mostly because of load balancing.
 
@@ -71,7 +68,5 @@ Even though there are many variants of linear attention, I'm labelling them all 
 ![Megakernel](/assets/images/megakernel.png)
 
 
-**4. Sparsity? **
-
-The core shapes we throw kernels at really do seem to collapse into a surprisingly small set. I'm excited to see what new patterns emerge!
+The core shapes we throw kernels at might collapse into a surprisingly small set. I'm excited to see what new patterns emerge that can create new "movements" on the GPU. 
 
