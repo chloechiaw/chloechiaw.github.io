@@ -8,7 +8,7 @@ permalink: /hardware-lottery/
 
 There's been a lot of discourse lately about the lottery—which places got the good chips, which didn't, who's rationing H100s. And against that backdrop it's a little surprising that some of the most hardware-constrianed shops overseas still make really great open models that hold their own, at least in a benchmark setting!
 
-On the flip side, let's set aside the hardware lottery discussion from the US China export controls/ supply chain/ talk. You can also say there is a hardware lottery between you as the engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack.
+On the flip side, let's set aside the hardware lottery discussion from the US China export controls/ supply chain/ talk. You can also argue there is a hardware lottery between you as the engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack.
 
 Realistic MFUs today are so challenging! A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, and Mixture of Experts specifically still lands frighteningly low. 
 
