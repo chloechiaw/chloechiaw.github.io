@@ -10,7 +10,7 @@ There's been a lot of discourse lately about the lottery—which places got the 
 
 On the flip side, let's set aside the hardware lottery discussion from the US China export controls, supply chain, yada discussion. There is also a hardware lottery between just  your engineer and the GPU, as it is still really hard to get MFU up even though researchers have really been optimizing every part of the stack! Realistic MFUs today are humbling. A dense transformer on a well-tuned stack can reach maybe 40–50% of what the hardware could theoretically do, but Mixture of Experts specifically still lands frighteningly low. 
 
-![alt text](assets/images/haha.png)
+![alt text](/assets/images/haha.png)
 
 That made me guess that maybe the search space we've explored in performance tricks is pretty small. This might sound a bit strange, cause if we take a look at novel methods in the last year, they seem pretty diverse: 
 
@@ -42,8 +42,6 @@ Let's label these operations in a table:
 | **The move** | Fuse into a neighbor, never a standalone kernel | Tile + online softmax | Isolate the irregularity, so more of the work stays regular dense work |
 
 We can visualize these primitives like this:
-
-![alt text](/assets/images/haha.png)
 
 ![alt text](/assets/images/all_three.png)
 
